@@ -1,4 +1,5 @@
 # Main Strategy Class
+import abc
 
 # TODO - Move Constants to another file and convert to enums
 LEVERAGE_MODE_DEFAULT = 0
@@ -25,20 +26,20 @@ strategy_data = {
 }
 
 # Triggers have three
-class Strategy:
-    ''' Base Strategy Class '''
-    def __init__(self, symbol='', strat_data={}):
-        # init members
-        if 'symbol' in strat_data: self.symbol = strat_data['symbol']
-        if symbol != '': self.symbol = symbol # override strat_data if present
-        if 'trade_size' in strat_data: self.tradeSize = strat_data['trade_size']
-        else: self.tradeSize = 1
-        if 'primary_indicators' in strat_data: self.indicators = strat_data['primary_indicators']
-        else: self.indicators = []
+class IStrategy(abc.ABC):
+    ''' Base Strategy Interface '''
+    def __init__(self, symbol='', strat_data={}): pass
     
+    @abc.abstractmethod
     def Begin(self): pass
+    @abc.abstractmethod
     def UpdateIndicators(self): pass
+    @abc.abstractmethod
     def CheckTriggers(self, indicators=[]): pass
-    def CheckExit(self, indicators=[]): pass
-    def CheckEntry(self, indicators=[]): pass
+    @abc.abstractmethod
+    def CheckExit(self, indicators): pass
+    @abc.abstractmethod
+    def CheckEntry(self, indicators): pass
+    @abc.abstractmethod
     def UpdateSystem(self): pass
+
