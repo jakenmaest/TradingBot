@@ -28,7 +28,7 @@ strategy_data = {
 # Triggers have three
 class IStrategy(abc.ABC):
     ''' Base Strategy Interface '''
-    def __init__(self, symbol='', strat_data={}): pass
+    def __init__(self, strat_data={}): pass
     
     @abc.abstractmethod
     def Begin(self): pass
