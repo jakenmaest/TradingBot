@@ -1,6 +1,6 @@
 # Indicators are stored in a dictionary with the name as key, and 
 # the function as the value. This can be called from a strategy either
-# with or without parameters.
+# with or without parameters (must define defaults).
 
 # TODO - move to constants file and enumerate
 UPDATE_OPEN = 0
@@ -27,24 +27,19 @@ debugLog = True
 #bybit = ccxt.bybit({'apiKey': BYBIT_API_KEY, 'secret': BYBIT_API_SECRET})
 data_dir = OHLCV_DIR
 
-## Test Data ##
+## Test OHLCV data ##
 base_cur = "USDT"
 exch_cur = "DOGE"
 symbol = '_'.join([exch_cur, base_cur])
 timeframe = "5m"
-maxCandles = 500
+maxCandles = 264
 runUpCandles = 0
 jsonfile = f"{data_dir}{symbol}-{timeframe}.json"
 print(jsonfile)
 df = pd.read_json(jsonfile)
-df.head()
-#df = df[-500:-2]
-#df.columns = ['timestamp','open','high','low','close','volume']
-#df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-#df['trade'] = 'no_trade'
-#trades = pd.DataFrame(columns=['time', 'leverage', 'fees', 'side', 'stake', 'entry_price', 'exit_price', 'percent_difference', 'PNL', 'entry_reason', 'exit_reason', 'entry_balance', 'exit_balance', 'status'])
-#superTrend(df, multiplier=5, period=9)
-#df_backup = df.copy()
+df = df.head(maxCandles)
+print(df)
+
 ##############
 # Indicators #
 ##############
