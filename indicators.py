@@ -11,7 +11,11 @@ UPDATE_HOUR = 4
 UPDATE_DAY = 5
 
 import pandas as pd
-import ta
+import pandas_ta as pta
+from ta.trend import SMAIndicator, EMAIndicator, MACD
+from ta.momentum import RSIIndicator
+f#rom ta.volatility import *
+
 ## SETUP ##
 
 #import ccxt
@@ -45,17 +49,35 @@ print(df)
 ##############
 
 def SimpleMovingAverage(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
-    ''' Get simple moving average of pair given periods \n
-            If backtest == True, returns a pandas Series, else returns a float  '''
-    if not backtest:
-        per = 0-periods
-        sum = data[per:].sum()
-        if verbose: print(f"sum = {sum}")
-        return float(sum/periods)
-    # Do backtesting
+    sma = SMAIndicator(data['close'], periods, False)
+    return sma.sma_indicator()
 
-indicators = {
+def ExponentialMovingAverage(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+    ema = EMAIndicator(data['close'], periods, False)
+    return ema.ema_indicator()
+
+## REQUIRES TA-LIB
+def TripleExponentialMovingAverage(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+    tema = pta.tema(close=data['close'], length=periods, talib=False)
+    return tema
+
+def RelativeStrengthIndex(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+    rsi = RSIIndicator(close=data['close'], window=periods, fillna=False)
+    return rsi
+
+def MovingAverageConvergenceDivergence(fast=26, slow=12, signal=9, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+    macd = MACD(data['close'], fast, slow, signal, False)
+    macd_ = macd.macd()
+    signal_ = macd.macd_signal()
+    diff_ = macd.macd_diff()
+    return macd_, signal_, diff_
+
+all_indicators = {
     ''' Indicators dictionary "name": <method call> '''
-    'SMA': SimpleMovingAverage
+    'SMA': SimpleMovingAverage,
+    'EMA': ExponentialMovingAverage,
+    'TEMA': TripleExponentialMovingAverage,
+    'RSI': RelativeStrengthIndex,
+    'MACD': MovingAverageConvergenceDivergence
 }
 

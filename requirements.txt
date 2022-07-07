@@ -2,3 +2,5 @@ pandas
 ta
 ccxt
 pybit
+pandas-ta
+datetime

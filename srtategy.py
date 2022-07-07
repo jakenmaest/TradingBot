@@ -32,14 +32,20 @@ class IStrategy(abc.ABC):
     
     @abc.abstractmethod
     def Begin(self): pass
+
     @abc.abstractmethod
     def UpdateIndicators(self): pass
+
     @abc.abstractmethod
     def CheckTriggers(self, indicators=[]): pass
+
     @abc.abstractmethod
     def CheckExit(self, indicators): pass
+
     @abc.abstractmethod
     def CheckEntry(self, indicators): pass
+
     @abc.abstractmethod
     def UpdateSystem(self): pass
+    
 
