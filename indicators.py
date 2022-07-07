@@ -14,58 +14,41 @@ import pandas as pd
 import pandas_ta as pta
 from ta.trend import SMAIndicator, EMAIndicator, MACD
 from ta.momentum import RSIIndicator
-f#rom ta.volatility import *
+#from ta.volatility import *
 
 ## SETUP ##
 
 #import ccxt
 from Values import BYBIT_API_KEY, BYBIT_API_SECRET, OHLCV_DIR
 #import Utilities as utils
-import pandas as pd
-pd.set_option('display.max_rows', None)
-import warnings
-warnings.simplefilter(action='ignore')
-
+#pd.set_option('display.max_rows', None)
 # Switch Logging off and on
 debugLog = True
 #bybit = ccxt.bybit({'apiKey': BYBIT_API_KEY, 'secret': BYBIT_API_SECRET})
-data_dir = OHLCV_DIR
-
-## Test OHLCV data ##
-base_cur = "USDT"
-exch_cur = "DOGE"
-symbol = '_'.join([exch_cur, base_cur])
-timeframe = "5m"
-maxCandles = 264
-runUpCandles = 0
-jsonfile = f"{data_dir}{symbol}-{timeframe}.json"
-print(jsonfile)
-df = pd.read_json(jsonfile)
-df = df.head(maxCandles)
-print(df)
 
 ##############
 # Indicators #
 ##############
 
-def SimpleMovingAverage(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+def SimpleMovingAverage(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
     sma = SMAIndicator(data['close'], periods, False)
     return sma.sma_indicator()
 
-def ExponentialMovingAverage(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+def ExponentialMovingAverage(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
     ema = EMAIndicator(data['close'], periods, False)
     return ema.ema_indicator()
 
 ## REQUIRES TA-LIB
-def TripleExponentialMovingAverage(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+def TripleExponentialMovingAverage(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
     tema = pta.tema(close=data['close'], length=periods, talib=False)
     return tema
 
-def RelativeStrengthIndex(periods: int = 10, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+def RelativeStrengthIndex(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
     rsi = RSIIndicator(close=data['close'], window=periods, fillna=False)
-    return rsi
+    rsi_ = rsi.rsi()
+    return rsi_
 
-def MovingAverageConvergenceDivergence(fast=26, slow=12, signal=9, data = pd.DataFrame, backtest: bool = False, verbose=debugLog):
+def MovingAverageConvergenceDivergence(data = pd.DataFrame, slow=26, fast=12, signal=9, backtest: bool = False, verbose=debugLog):
     macd = MACD(data['close'], fast, slow, signal, False)
     macd_ = macd.macd()
     signal_ = macd.macd_signal()
@@ -80,4 +63,3 @@ all_indicators = {
     'RSI': RelativeStrengthIndex,
     'MACD': MovingAverageConvergenceDivergence
 }
-
