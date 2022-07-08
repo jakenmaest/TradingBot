@@ -14,7 +14,8 @@ import pandas as pd
 import pandas_ta as pta
 from ta.trend import SMAIndicator, EMAIndicator, MACD
 from ta.momentum import RSIIndicator
-#from ta.volatility import *
+from ta.momentum import AwesomeOscillatorIndicator as AweOsc
+from ta.volatility import BollingerBands as BollBands
 
 ## SETUP ##
 
@@ -30,30 +31,46 @@ debugLog = True
 # Indicators #
 ##############
 
-def SimpleMovingAverage(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
+def SimpleMovingAverage(data = pd.DataFrame, periods: int = 9, backtest: bool = False, verbose=debugLog):
     sma = SMAIndicator(data['close'], periods, False)
     return sma.sma_indicator()
 
-def ExponentialMovingAverage(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
+def ExponentialMovingAverage(data = pd.DataFrame, periods: int = 9, backtest: bool = False, verbose=debugLog):
     ema = EMAIndicator(data['close'], periods, False)
     return ema.ema_indicator()
 
 ## REQUIRES TA-LIB
-def TripleExponentialMovingAverage(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
+def TripleExponentialMovingAverage(data = pd.DataFrame, periods: int = 9, backtest: bool = False, verbose=debugLog):
     tema = pta.tema(close=data['close'], length=periods, talib=False)
     return tema
 
 def RelativeStrengthIndex(data = pd.DataFrame, periods: int = 10, backtest: bool = False, verbose=debugLog):
     rsi = RSIIndicator(close=data['close'], window=periods, fillna=False)
-    rsi_ = rsi.rsi()
+    rsi_ = rsi._rsi
     return rsi_
 
 def MovingAverageConvergenceDivergence(data = pd.DataFrame, slow=26, fast=12, signal=9, backtest: bool = False, verbose=debugLog):
-    macd = MACD(data['close'], fast, slow, signal, False)
-    macd_ = macd.macd()
-    signal_ = macd.macd_signal()
-    diff_ = macd.macd_diff()
+    macd = MACD(close=data['close'], slow=slow, fast=fast, signal=signal, fillna=False)
+    macd_ = macd._macd
+    signal_ = macd._macd_signal
+    diff_ = macd._macd_diff
     return macd_, signal_, diff_
+
+def BollingerBands(data, period = 20, std_dev = 2):
+    bb = BollBands(data, period, std_dev, fillna=False)
+    h_band = bb._hband
+    l_band = bb._lband
+    m_band = bb._mavg
+    return h_band, l_band, m_band
+
+
+def Supertrend(data, ATR=3, ATR_Mult=7.0):
+    basic_upper = (data['high'] + data['low'])/2 + ATR_Mult * ATR
+    basic_lower = (data['high'] + data['low'])/2 - ATR_Mult * ATR
+    #finalbandupper = 
+
+def AwsomeOscillator(data, period1, period2):
+    a_o = AweOsc(high=data['high'],low=data['low'], window1=period1, window2=period2, fillna=False)
 
 all_indicators = {
     ''' Indicators dictionary "name": <method call> '''
@@ -61,5 +78,7 @@ all_indicators = {
     'EMA': ExponentialMovingAverage,
     'TEMA': TripleExponentialMovingAverage,
     'RSI': RelativeStrengthIndex,
-    'MACD': MovingAverageConvergenceDivergence
+    'MACD': MovingAverageConvergenceDivergence,
+    'BBANDS': BollingerBands,
+    'STREND': Supertrend
 }
