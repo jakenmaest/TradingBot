@@ -1,5 +1,15 @@
 # Main Strategy Class
 import abc
+import os
+import pandas as pd
+from indicators import Indicators
+
+## Test Data
+data_dir = f"../../data/bybit/" # current historical data
+jsonfile = f"{data_dir}{'DOGEUSDT'}-{'5min'}.json"
+if os.path.exists(jsonfile): print("Yay")
+else: print("boo")
+    #df = pd.read_json(jsonfile)
 
 # TODO - Move Constants to another file and convert to enums
 LEVERAGE_MODE_DEFAULT = 0
@@ -13,10 +23,7 @@ primaryInd = [('EMA',10), ('EMA',50), ('EMA',100)]
 secondaryInd = [('BBands', 10, 2), ('ATR', 5), ('Fractals', 2, 5)]
 tertiaryInd = [('Supertrend', 12, 5)]
 
-# Load List of strategies from a file
-
-# Triggers have three
-class Strategy(abc.ABC):
+class Strategy():
     ''' Base Strategy Interface '''
     def __init__(self, strat_data={}):
         self.s_data = {
@@ -50,33 +57,27 @@ class Strategy(abc.ABC):
         ## Parse parameters
         ## Check for previous data Candle data
         pass
-    @abc.abstractmethod
+
     def FillIndicators(self):
         ## Fill indicators to date
         pass
 
-    #@abc.abstractmethod
     def UpdateIndicators(self):
         ## In live/fwd-testing modes, Update all indicators
         pass
 
-    #@abc.abstractmethod
     def UpdateTriggers(self, indicators=[]):
         ## In live/fwd-testing modes, Update all indicators
         pass
 
-    #@abc.abstractmethod
     def CheckExit(self, triggers):
         # Get Trigger info to check exit info
         pass
 
-    #@abc.abstractmethod
     def CheckEntry(self, triggers):
         # Get Trigger info to check entry info
         pass
 
-    #@abc.abstractmethod
     def CommitUpdate(self, triggers): pass
 
-    #@abc.abstractmethod
     def UpdateSystem(self): pass

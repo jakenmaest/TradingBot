@@ -1,6 +1,6 @@
 # Indicators are stored in a dictionary with the name as key, and 
 # the function as the value. This can be called from a strategy either
-# with or without parameters (must define defaults).
+# with or without parameters (must define all parameters with defaults).
 
 # TODO - move to constants file and enumerate
 UPDATE_OPEN = 0
@@ -85,14 +85,14 @@ class IndicatorType(enum.Enum):
     TRADE_SIGNAL = enum.auto()
 ind_t = IndicatorType()
 
-all_indicators = {
+Indicators = {
     ''' Indicators dictionary -
         "name": (<method call>, indicatortype '''
     'SMA': (SimpleMovingAverage, ind_t.CURRENCY_LINE),
     'EMA': (ExponentialMovingAverage, ind_t.CURRENCY_LINE),
     'TEMA': (TripleExponentialMovingAverage, ind_t.CURRENCY_LINE),
     'RSI': (RelativeStrengthIndex, ind_t.PERCENTAGE_LINE),
-    'MACD': (MovingAverageConvergenceDivergence[0], [ind_t.HISTOGRAM_BAR, ]),
+    'MACD': (MovingAverageConvergenceDivergence[0], ind_t.VALUE_LINE, ind_t.VALUE_LINE, [ind_t.HISTOGRAM_BAR]),
     'BBANDS': (BollingerBands, ind_t.BANDS),
     'STREND': (Supertrend, [ind_t.TRADE_SIGNAL, ind_t.BANDS])
 }
