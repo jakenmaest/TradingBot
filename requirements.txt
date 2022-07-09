@@ -4,3 +4,7 @@ ccxt
 pybit
 pandas-ta
 datetime
+dash
+dash-renderer
+dash_html_components
+dash_core_components

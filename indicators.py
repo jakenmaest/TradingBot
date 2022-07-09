@@ -10,15 +10,13 @@ UPDATE_MIN = 3
 UPDATE_HOUR = 4
 UPDATE_DAY = 5
 
+import enum
 import pandas as pd
 import pandas_ta as pta
 from ta.trend import SMAIndicator, EMAIndicator, MACD
 from ta.momentum import RSIIndicator
 from ta.momentum import AwesomeOscillatorIndicator as AweOsc
 from ta.volatility import BollingerBands as BollBands
-
-## SETUP ##
-
 #import ccxt
 from Values import BYBIT_API_KEY, BYBIT_API_SECRET, OHLCV_DIR
 #import Utilities as utils
@@ -72,13 +70,29 @@ def Supertrend(data, ATR=3, ATR_Mult=7.0):
 def AwsomeOscillator(data, period1, period2):
     a_o = AweOsc(high=data['high'],low=data['low'], window1=period1, window2=period2, fillna=False)
 
+class IndicatorType(enum.Enum):
+    ERROR = -1
+    NULL = 0
+    CUSTOM = enum.auto()
+    VALUE_LINE = enum.auto()
+    VALUE_POINT = enum.auto()
+    CURRENCY_LINE = enum.auto()
+    CURRENCY_POINT = enum.auto()
+    PERCENTAGE_LINE = enum.auto()
+    HISTOGRAM_BAR = enum.auto()
+    BANDS = enum.auto()
+    FILL = enum.auto()
+    TRADE_SIGNAL = enum.auto()
+ind_t = IndicatorType()
+
 all_indicators = {
-    ''' Indicators dictionary "name": <method call> '''
-    'SMA': SimpleMovingAverage,
-    'EMA': ExponentialMovingAverage,
-    'TEMA': TripleExponentialMovingAverage,
-    'RSI': RelativeStrengthIndex,
-    'MACD': MovingAverageConvergenceDivergence,
-    'BBANDS': BollingerBands,
-    'STREND': Supertrend
+    ''' Indicators dictionary -
+        "name": (<method call>, indicatortype '''
+    'SMA': (SimpleMovingAverage, ind_t.CURRENCY_LINE),
+    'EMA': (ExponentialMovingAverage, ind_t.CURRENCY_LINE),
+    'TEMA': (TripleExponentialMovingAverage, ind_t.CURRENCY_LINE),
+    'RSI': (RelativeStrengthIndex, ind_t.PERCENTAGE_LINE),
+    'MACD': (MovingAverageConvergenceDivergence[0], [ind_t.HISTOGRAM_BAR, ]),
+    'BBANDS': (BollingerBands, ind_t.BANDS),
+    'STREND': (Supertrend, [ind_t.TRADE_SIGNAL, ind_t.BANDS])
 }
