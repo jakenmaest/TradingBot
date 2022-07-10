@@ -83,7 +83,7 @@ class IndicatorType(enum.Enum):
     BANDS = enum.auto()
     FILL = enum.auto()
     TRADE_SIGNAL = enum.auto()
-ind_t = IndicatorType()
+ind_t = IndicatorType
 
 Indicators = {
     ''' Indicators dictionary -
@@ -92,7 +92,7 @@ Indicators = {
     'EMA': (ExponentialMovingAverage, ind_t.CURRENCY_LINE),
     'TEMA': (TripleExponentialMovingAverage, ind_t.CURRENCY_LINE),
     'RSI': (RelativeStrengthIndex, ind_t.PERCENTAGE_LINE),
-    'MACD': (MovingAverageConvergenceDivergence[0], ind_t.VALUE_LINE, ind_t.VALUE_LINE, [ind_t.HISTOGRAM_BAR]),
+    'MACD': (MovingAverageConvergenceDivergence, ind_t.VALUE_LINE, ind_t.VALUE_LINE, [ind_t.HISTOGRAM_BAR]),
     'BBANDS': (BollingerBands, ind_t.BANDS),
     'STREND': (Supertrend, [ind_t.TRADE_SIGNAL, ind_t.BANDS])
 }

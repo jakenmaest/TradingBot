@@ -1,21 +1,21 @@
 # Main Strategy Class
-import abc
 import os
 import pandas as pd
 from indicators import Indicators
-
+from Utilities import GetOCHLV
 ## Test Data
 data_dir = f"../../data/bybit/" # current historical data
 jsonfile = f"{data_dir}{'DOGEUSDT'}-{'5min'}.json"
-if os.path.exists(jsonfile): print("Yay")
+if os.path.exists(jsonfile): pass
+    # Check for strategy timeframe
 else: print("boo")
+    # Create file
     #df = pd.read_json(jsonfile)
 
 # TODO - Move Constants to another file and convert to enums
 LEVERAGE_MODE_DEFAULT = 0
 LEVERAGE_MODE_CROSSED = 1
 LEVERAGE_MODE_ISOLATED = 2
-IndicatorList = []
 
 # Indicators inputs are stored in a tuple with the label string at index 0,
 # and parameters following ** order is essential, hence tuples **
@@ -27,11 +27,13 @@ class Strategy():
     ''' Base Strategy Interface '''
     def __init__(self, strat_data={}):
         self.s_data = {
+            # Default data
             'id': -1,
+
             'name': 'SampleEMA',
             'timeframes': ['5min'],
             'symbols': ['DOGEUSDT'],
-            'start_time': '02_Jul_2022_00:00.00Z',
+            'start_time': '02_Jul_2022',
             'end_time' : '09_Jul_2022_00:00.00Z',
             'trade_size': 1.0,
             'leverage': 1,
@@ -81,3 +83,4 @@ class Strategy():
     def CommitUpdate(self, triggers): pass
 
     def UpdateSystem(self): pass
+

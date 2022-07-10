@@ -5,12 +5,13 @@
 #import OHLCV
 ## SETUP ##
 
-from enum import Enum
+import enum
 import ccxt
 from Values import BYBIT_API_KEY, BYBIT_API_SECRET, OHLCV_DIR
 import pandas as pd
 import warnings
 from pybit import usdt_perpetual
+import os
 
 pybit_auth = usdt_perpetual.HTTP(
     endpoint="https://api.bybit.com",
@@ -18,46 +19,59 @@ pybit_auth = usdt_perpetual.HTTP(
     api_secret=BYBIT_API_SECRET
 )
 
-# Switch Logging off and on
-debugLog = True
+class TimeFormat(enum.Enum):
+    ERROR=-1
+    NULL=0
+    TIMESTAMP=1
+    DATETIME=2
+    READABLE=3
 
+class SessionState(enum.Enum):
+    ERROR=-1
+    NULL=0
+    START=1
+    INIT=2
+    IDLE=3
+
+class DataState(enum.Enum):
+    ERROR=-1
+    NULL=0
+    START=1
+    INIT=2
+    UPDATING_ACTIVE=3
+    UPDATED_ACTIVE=4
+    UPDATING_INACTIVE=5
+    UPDATED_INACTIVE=6
+    LIVE=7
+
+class StrategyState(enum.Enum):
+    ERROR=-1
+    NULL=0
+    START=1
+    INIT=2
+    IDLE=3
+    LIVE=4
+    POPULATING_INDICATORS=5
+    POPULATING_TRIGGERS=6
+    CHECKING_EXITS=7
+    CHECKING_ENTRIES=8
+    TRADING=9
+
+session = {
+    'logging': True,
+    'exchange': 'bybit',
+    'data_dir': OHLCV_DIR,
+    'state': SessionState.NULL,
+    'data_state': DataState.NULL,
+    'total_strategies': 0,
+    'active_strategy': 0,
+}
+
+# switch off for full verbosity
 warnings.simplefilter(action='ignore')
 pd.set_option('display.max_rows', None)
 
 bybit = ccxt.bybit({'apiKey': BYBIT_API_KEY, 'secret': BYBIT_API_SECRET})
-data_dir = OHLCV_DIR
-
-class CandleStatus(Enum):
-    # States
-    VALID=1
-    NULL=0
-    ERROR=-1
-    # Error States
-    INVALID_TIMESTAMP=-2
-    TIME_SKIP_FWD=-3
-    TIME_SKIP_BACK=-4
-    HIGH_TOO_LOW=-5
-    LOW_TOO_HIGH=-6
-    OPEN_ERROR_LOW=-7
-    OPEN_ERROR_HIGH=-8
-    CLOSE_LOW=-9
-    CLOSE_HIGH=-10
-    INVALID_VOLUME=-11
-    MISSING_DATA=-12
-
-    ## CHECK CANDLES CLASS
-    #       Class for checking the validity of a set of candles, including 
-    #       out of order candles, highs lower than lows etc., and makes sure
-    #       the data is clean for full ohlcv use
-    # TODO: Split into utils class for global use
-    #def CheckOHLCV(candles: OHLCV) -> pd.DataFrame: pass
-            # check timestamp synchnicity
-            # check candle values are valid
-            # is low higher than high
-            # is high lower than low
-            # is open too high or low
-            # is close too high or low
-            # is the volume accurate
 
 def DifferencePercent(num1, num2):
     '''returns ( (num2 - num1) / num1) * 100'''
@@ -67,12 +81,10 @@ def DifferenceValue(num1, num2):
     '''returns num2 - num1'''
     return num2-num1
 
-     ## FUNCTIONS ##
-
  # Get Balance fetch_balance dict_keys(['info', 'ADA', 'BIT', 'BTC', 'DOT', 'EOS',
 #                                      'ETH', 'LTC', 'LUNA', 'MANA', 'SOL', 'USDT',
 #                                      'XRP', 'free', 'used', 'total'])
-def GetTotalBalance(verbose=debugLog) -> dict:
+def GetTotalBalance(verbose=session['logging']) -> dict:
     full_balances = bybit.fetch_balance()
     totals = full_balances['total']
     balance = {}
@@ -81,7 +93,7 @@ def GetTotalBalance(verbose=debugLog) -> dict:
             balance[str(t)] = totals[t]
     return balance
 #print(GetTotalBalance())
-def GetFreeBalance(verbose=debugLog) -> dict:
+def GetFreeBalance(verbose=session['logging']) -> dict:
     full_balances = bybit.fetch_balance()
     totals = full_balances['free']
     balance = {}
@@ -90,7 +102,7 @@ def GetFreeBalance(verbose=debugLog) -> dict:
             balance[str(t)] = totals[t]
     return balance
 #print(GetFreeBalance())
-def GetUsedBalance(verbose=debugLog) -> dict:
+def GetUsedBalance(verbose=session['logging']) -> dict:
     full_balances = bybit.fetch_balance()
     totals = full_balances['used']
     balance = {}
@@ -101,7 +113,7 @@ def GetUsedBalance(verbose=debugLog) -> dict:
 #print(GetUsedBalance())
 
  # Get all symbol ids, or all of a given quote currency
-def GetSymbols(quote_currency="", verbose=debugLog) -> list:
+def GetSymbols(quote_currency="", verbose=session['logging']) -> list:
     marketsFull = bybit.fetch_markets()
     symbols = []
     count = 0
@@ -116,7 +128,7 @@ def GetSymbols(quote_currency="", verbose=debugLog) -> list:
     return symbols
 #print(GetSymbols('USDT'))
 
-def GetTop24hVol(number: int=0, stripped: bool=True, verbose: bool=debugLog) -> tuple:
+def GetTop24hVol(number: int=0, stripped: bool=True, verbose=session['logging']) -> tuple:
     if number > 99:
         if verbose: print("Please pick a smaller number")
         return ()
@@ -142,12 +154,12 @@ def GetTop24hVol(number: int=0, stripped: bool=True, verbose: bool=debugLog) -> 
 
  # Create a Simple Buy/Sell Market Order
 # amount - size of position in base currency
-def CreateSimpleMarketOrder(sym: str = 'ADAUSDT', side: str = 'buy', amount: float = 1.0, verbose=debugLog) -> dict:
+def CreateSimpleMarketOrder(sym: str = 'ADAUSDT', side: str = 'buy', amount: float = 1.0, verbose=session['logging']) -> dict:
     return bybit.create_market_order(sym, side, amount, 0)
 #print(CreateSimpleMarketOrder('XRPUSDT'))
 
  # Create a Simple Buy/Sell Limit Order
-def CreateSimpleLimitOrder(sym: str = 'ADAUSDT', side: str = 'buy', amount: float = 1.0, price: float = 0.48, verbose=debugLog) -> dict:
+def CreateSimpleLimitOrder(sym: str = 'ADAUSDT', side: str = 'buy', amount: float = 1.0, price: float = 0.48, verbose=session['logging']) -> dict:
     return bybit.create_limit_order(sym, side, amount, price)
 #print(CreateSimpleLimitOrder('XRPUSDT', amount=10))
 
@@ -192,6 +204,51 @@ def GetConditionalOrders(symbol_list: list = []) -> list:
     return conditionals
 #print(GetConditionalOrders())
 
-def GetCandles(symbol: str = "DOGEUSDT", timeframe='5min', start: float = 0.0, end: float = 0.0):
-   '''Get Candles'''
-   return
+def GetOCHLV(symbol: str = "DOGE_USDT", timeframe='5m', start = 0.0, end = 0.0, timestamp=True):
+    '''Get OCHLV Data'''
+    cnd = None
+    ## Check for file
+    print(f"{OHLCV_DIR}/{symbol}-{timeframe}.json")
+    if os.path.exists(f"{OHLCV_DIR}{symbol}-{timeframe}.json"):
+        print("File Exists")
+        ## Update File
+    else:
+        print("No File Exists")
+        cnd = bybit.fetch_ohlcv(symbol, timeframe, start, end)
+        ## Get Data
+    
+    return cnd
+
+'''
+class CandleStatus(enum.Enum):
+    # States
+    VALID=1
+    NULL=0
+    ERROR=-1
+    # Error States
+    INVALID_TIMESTAMP=enum.auto()
+    TIME_SKIP_FWD=enum.auto()
+    TIME_SKIP_BACK=enum.auto()
+    HIGH_TOO_LOW=enum.auto()
+    LOW_TOO_HIGH=enum.auto()
+    OPEN_ERROR_LOW=enum.auto()
+    OPEN_ERROR_HIGH=enum.auto()
+    CLOSE_LOW=enum.auto()
+    CLOSE_HIGH=enum.auto()
+    INVALID_VOLUME=enum.auto()
+    MISSING_DATA=enum.auto()
+
+    ## CHECK CANDLES CLASS
+    #       Class for checking the validity of a set of candles, including 
+    #       out of order candles, highs lower than lows etc., and makes sure
+    #       the data is clean for full ohlcv use
+    # TODO: Split into utils class for global use
+    #def CheckOHLCV(candles: OHLCV) -> pd.DataFrame: pass
+            # check timestamp synchnicity
+            # check candle values are valid
+            # is low higher than high
+            # is high lower than low
+            # is open too high or low
+            # is close too high or low
+            # is the volume accurate
+'''
