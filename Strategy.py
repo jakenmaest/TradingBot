@@ -29,12 +29,11 @@ class Strategy():
         self.s_data = {
             # Default data
             'id': -1,
-
             'name': 'SampleEMA',
             'timeframes': ['5min'],
             'symbols': ['DOGEUSDT'],
             'start_time': '02_Jul_2022',
-            'end_time' : '09_Jul_2022_00:00.00Z',
+            'end_time' : '09_Jul_2022',
             'trade_size': 1.0,
             'leverage': 1,
             'lev_mode': LEVERAGE_MODE_CROSSED,

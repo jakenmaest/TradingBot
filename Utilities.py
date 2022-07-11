@@ -5,7 +5,10 @@
 #import OHLCV
 ## SETUP ##
 
+from datetime import datetime
 import enum
+import math
+from sqlite3 import Timestamp
 import ccxt
 from Values import BYBIT_API_KEY, BYBIT_API_SECRET, OHLCV_DIR
 import pandas as pd
@@ -18,6 +21,20 @@ pybit_auth = usdt_perpetual.HTTP(
     api_key=BYBIT_API_KEY,
     api_secret=BYBIT_API_SECRET
 )
+
+
+# Seconds in certain timeframes
+class timeframe_secs():
+    TSTAMP_1_MIN = 60
+    TSTAMP_5_MIN = 300
+    TSTAMP_10_MIN = 600
+    TSTAMP_15_MIN = 900
+    TSTAMP_20_MIN = 1200
+    TSTAMP_30_MIN = 1800
+    TSTAMP_45_MIN = 2700
+    TSTAMP_1_HOUR = 3600
+    TSTAMP_1_DAY = 86400
+    TSTAMP_1_WEEK = 604800
 
 class TimeFormat(enum.Enum):
     ERROR=-1
@@ -204,20 +221,66 @@ def GetConditionalOrders(symbol_list: list = []) -> list:
     return conditionals
 #print(GetConditionalOrders())
 
-def GetOCHLV(symbol: str = "DOGE_USDT", timeframe='5m', start = 0.0, end = 0.0, timestamp=True):
-    '''Get OCHLV Data'''
-    cnd = None
-    ## Check for file
-    print(f"{OHLCV_DIR}/{symbol}-{timeframe}.json")
-    if os.path.exists(f"{OHLCV_DIR}{symbol}-{timeframe}.json"):
-        print("File Exists")
-        ## Update File
+def GetOCHLV(symbol = "DOGE_USDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 0.0, end = 0.0, time_stamp=True):
+    '''Get OCHLV Data -'''
+    cnd = []
+    if time_stamp:
+        max_fetch_amount = 200
+        print(f"{tframe_secs}")
+        candle_count=(int(end-start)/float(tframe_secs))
+        batch_count = math.floor(candle_count/max_fetch_amount) + 1
+        print(f"Candles: {candle_count}\nBatch Count:{batch_count} @ {max_fetch_amount}/batch")
+        last_batch = candle_count - ((batch_count-1)*max_fetch_amount)
+        print(f"Last BatchSize: {last_batch}")
+        # convert to ms timestamp
+        start_time = int(start*1000)
+        print(datetime.fromtimestamp(start_time/1000))
+        end_time = int(end*1000)
+        print(datetime.fromtimestamp(end_time/1000))
+        time_count = start_time
+        print(candle_count)
+        tf_ms = tframe_secs*1000
+        ## Check for file
+        #print(f"{OHLCV_DIR}/{symbol}-{timeframe}.json")
+        if os.path.exists(f"{OHLCV_DIR}{symbol}-{timeframe}.json"):
+            print("File Exists")
+            ## Check File for relevant data and extract
+            ## Update File with needed data
+        else:
+            print("No File Exists")
+            ## Get relevant data in batches
+            
+            # up to penultimate batch
+            for i in range(batch_count-1):
+                batch_end = time_count + (tf_ms * (max_fetch_amount-1))
+                tmp_cnd = bybit.fetch_ohlcv(symbol, timeframe, time_count, batch_end)
+                cnd += tmp_cnd
+                #print(f"batch {i+1}({datetime.fromtimestamp(time_count/1000)}-{datetime.fromtimestamp(batch_end/1000)}): {len(tmp_cnd)} Candles")
+                time_count = batch_end + tf_ms # increment timestamp
+            # do final batch
+            batch_end = int(time_count + ((last_batch * tf_ms)-tf_ms))
+            tmp_cnd = bybit.fetch_ohlcv(symbol, timeframe, time_count, batch_end)
+            cnd += tmp_cnd
+            #print(f"batch {batch_count}({datetime.fromtimestamp(time_count/1000)}-{datetime.fromtimestamp(batch_end/1000)}): {len(tmp_cnd)} Candles")
+            #print(f"total Candles: {len(cnd)}")
+            candle_count = int(candle_count)
+            cnd = cnd[:candle_count]
+            #print(f"Candle[0]:{datetime.fromtimestamp(cnd[0][0]/1000)} candle[-1]:{datetime.fromtimestamp(cnd[-1][0]/1000)}")
+            #print(f"Length {len(cnd)}")
+            #for i in range(len(cnd)):
+            #    test_time = start_time + (i * tf_ms)
+            #    cnd_time = cnd[i][0]
+            #    if test_time != cnd_time:
+            #        print("time sync error!!")
+            #        print(f"Test Time: {datetime.fromtimestamp(test_time/1000)}")
+            #        print(f"Candle Time: {datetime.fromtimestamp(test_time/1000)}")
+            #        return cnd
+        return cnd
     else:
-        print("No File Exists")
-        cnd = bybit.fetch_ohlcv(symbol, timeframe, start, end)
-        ## Get Data
-    
-    return cnd
+        ## Hande other time format entries
+        return "Date Format Not handled, please use use unix timestamp in secs"
+
+GetOCHLV(symbol = "DOGEUSDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 1657234800.0, end = 1657407600.0)
 
 '''
 class CandleStatus(enum.Enum):

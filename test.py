@@ -6,7 +6,7 @@ from datetime import datetime as date_time
 
 base_cur = "USDT"
 exch_cur = "DOGE"
-sym = '_'.join([exch_cur, base_cur])
+file_sym = '_'.join([exch_cur, base_cur])
 
 # Seconds in certain timeframe
 TSTAMP_1_MIN = 60.0
@@ -31,4 +31,4 @@ print(f"start {date_time.fromtimestamp(sTstamp)}:{sTstamp}")
 print(f"finish {date_time.fromtimestamp(eTstamp)}:{eTstamp}")
 
 if __name__ == "__main__":
-    print(GetOCHLV(symbol=sym, timeframe='5m', start=sTstamp, end=eTstamp))
+    print(GetOCHLV(symbol=file_sym, timeframe='5m', start=sTstamp, end=eTstamp))
