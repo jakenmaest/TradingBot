@@ -6,6 +6,7 @@
 ## SETUP ##
 
 from datetime import datetime
+from distutils.log import debug
 import enum
 import math
 from sqlite3 import Timestamp
@@ -221,33 +222,48 @@ def GetConditionalOrders(symbol_list: list = []) -> list:
     return conditionals
 #print(GetConditionalOrders())
 
-def GetOCHLV(symbol = "DOGE_USDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 0.0, end = 0.0, time_stamp=True):
+def GetOCHLV(symbol = "DOGE_USDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 0.0, end = 0.0, time_stamp=True, logging=True):
     '''Get OCHLV Data -'''
     cnd = []
+    # Parse Start and End Times
+
+    # Fetch Data
     if time_stamp:
         max_fetch_amount = 200
-        print(f"{tframe_secs}")
+        if logging: print(f"{tframe_secs}")
         candle_count=(int(end-start)/float(tframe_secs))
         batch_count = math.floor(candle_count/max_fetch_amount) + 1
-        print(f"Candles: {candle_count}\nBatch Count:{batch_count} @ {max_fetch_amount}/batch")
-        last_batch = candle_count - ((batch_count-1)*max_fetch_amount)
-        print(f"Last BatchSize: {last_batch}")
+        if logging: print(f"Candles: {candle_count}\nBatch Count:{batch_count} @ {max_fetch_amount}/batch")
+        last_batch = candle_count - ((batch_count-1) * max_fetch_amount)
+        if logging: print(f"Last BatchSize: {last_batch}")
         # convert to ms timestamp
         start_time = int(start*1000)
-        print(datetime.fromtimestamp(start_time/1000))
+        if logging: print(datetime.fromtimestamp(start_time/1000))
         end_time = int(end*1000)
-        print(datetime.fromtimestamp(end_time/1000))
+        if logging: print(datetime.fromtimestamp(end_time/1000))
         time_count = start_time
-        print(candle_count)
+        if logging: print(candle_count)
         tf_ms = tframe_secs*1000
         ## Check for file
+        filePath = f"{OHLCV_DIR}{symbol}-{timeframe}.csv"
         #print(f"{OHLCV_DIR}/{symbol}-{timeframe}.json")
-        if os.path.exists(f"{OHLCV_DIR}{symbol}-{timeframe}.json"):
-            print("File Exists")
+        if os.path.exists(filePath):
             ## Check File for relevant data and extract
+            cnd = pd.read_csv(filePath)
+            print(cnd.head())
+            #if logging: print(f"File Exists\nTimestamps start{datetime.fromtimestamp(float(cnd[1][0])/1000.0)} end{datetime.fromtimestamp(float(cnd[-1][0])/1000.0)}\n Checking")
+            #print(f"Length {len(cnd)}")
+            #for i in range(len(cnd)):
+            #    test_time = start_time + (i * tf_ms)
+            #    cnd_time = cnd[i][0]
+            #    if test_time != cnd_time:
+            #        print("time sync error!!")
+            #        print(f"Test Time: {datetime.fromtimestamp(test_time/1000)}")
+            #        print(f"Candle Time: {datetime.fromtimestamp(test_time/1000)}")
+            #        return cnd
             ## Update File with needed data
         else:
-            print("No File Exists")
+            if logging: print("No File Exists")
             ## Get relevant data in batches
             
             # up to penultimate batch
@@ -265,22 +281,14 @@ def GetOCHLV(symbol = "DOGE_USDT", timeframe='5m', tframe_secs=timeframe_secs.TS
             #print(f"total Candles: {len(cnd)}")
             candle_count = int(candle_count)
             cnd = cnd[:candle_count]
-            #print(f"Candle[0]:{datetime.fromtimestamp(cnd[0][0]/1000)} candle[-1]:{datetime.fromtimestamp(cnd[-1][0]/1000)}")
-            #print(f"Length {len(cnd)}")
-            #for i in range(len(cnd)):
-            #    test_time = start_time + (i * tf_ms)
-            #    cnd_time = cnd[i][0]
-            #    if test_time != cnd_time:
-            #        print("time sync error!!")
-            #        print(f"Test Time: {datetime.fromtimestamp(test_time/1000)}")
-            #        print(f"Candle Time: {datetime.fromtimestamp(test_time/1000)}")
-            #        return cnd
-        return cnd
+
+            dataF = pd.DataFrame(cnd)
+            dataF.to_csv(filePath)
+            return dataF
     else:
         ## Hande other time format entries
         return "Date Format Not handled, please use use unix timestamp in secs"
-
-GetOCHLV(symbol = "DOGEUSDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 1657234800.0, end = 1657407600.0)
+#GetOCHLV(symbol = "DOGEUSDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 1657234800.0, end = 1657407600.0)
 
 '''
 class CandleStatus(enum.Enum):

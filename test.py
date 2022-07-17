@@ -6,7 +6,7 @@ from datetime import datetime as date_time
 
 base_cur = "USDT"
 exch_cur = "DOGE"
-file_sym = '_'.join([exch_cur, base_cur])
+file_sym = ''.join([exch_cur, base_cur])
 
 # Seconds in certain timeframe
 TSTAMP_1_MIN = 60.0
@@ -21,14 +21,16 @@ TSTAMP_1_DAY = 86400.0
 TSTAMP_1_WEEK = 604800
 
 # No time specified
-sTime = date_time(2022,7,8)
+sTime = date_time(2022,6,8)
 eTime = date_time(2022,7,9)
 
 sTstamp = mktime(sTime.timetuple()) # start of start day
 eTstamp = mktime(eTime.timetuple()) + TSTAMP_1_DAY # end of end day
 
-print(f"start {date_time.fromtimestamp(sTstamp)}:{sTstamp}")
-print(f"finish {date_time.fromtimestamp(eTstamp)}:{eTstamp}")
-
 if __name__ == "__main__":
-    print(GetOCHLV(symbol=file_sym, timeframe='5m', start=sTstamp, end=eTstamp))
+
+    print(f"start {date_time.fromtimestamp(sTstamp)}:{sTstamp}")
+    print(f"finish {date_time.fromtimestamp(eTstamp)}:{eTstamp}")
+    df1 = GetOCHLV(symbol=file_sym, timeframe='5m', start=sTstamp, end=eTstamp)
+    print(df1.head())
+    
