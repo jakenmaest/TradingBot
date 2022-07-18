@@ -222,13 +222,13 @@ def GetConditionalOrders(symbol_list: list = []) -> list:
     return conditionals
 #print(GetConditionalOrders())
 
-def GetOCHLV(symbol = "DOGE_USDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 0.0, end = 0.0, time_stamp=True, logging=True):
+def GetOCHLV(symbol = "DOGE_USDT", timeframe='5m', tframe_secs=timeframe_secs.TSTAMP_5_MIN, start = 0.0, end = 0.0, time_stamp=True, logging=session['logging']):
     '''Get OCHLV Data -'''
     cnd = []
     # Parse Start and End Times
 
     # Fetch Data
-    if time_stamp:
+    if time_stamp: # if start and end parameters are unix timestamp
         max_fetch_amount = 200
         if logging: print(f"{tframe_secs}")
         candle_count=(int(end-start)/float(tframe_secs))
@@ -236,54 +236,50 @@ def GetOCHLV(symbol = "DOGE_USDT", timeframe='5m', tframe_secs=timeframe_secs.TS
         if logging: print(f"Candles: {candle_count}\nBatch Count:{batch_count} @ {max_fetch_amount}/batch")
         last_batch = candle_count - ((batch_count-1) * max_fetch_amount)
         if logging: print(f"Last BatchSize: {last_batch}")
-        # convert to ms timestamp
-        start_time = int(start*1000)
+        start_time = int(start*1000) # Convert to ms timestamp
         if logging: print(datetime.fromtimestamp(start_time/1000))
-        end_time = int(end*1000)
+        end_time = int(end*1000) # Convert to ms timestamp
         if logging: print(datetime.fromtimestamp(end_time/1000))
         time_count = start_time
         if logging: print(candle_count)
         tf_ms = tframe_secs*1000
+
         ## Check for file
         filePath = f"{OHLCV_DIR}{symbol}-{timeframe}.csv"
+
         #print(f"{OHLCV_DIR}/{symbol}-{timeframe}.json")
         if os.path.exists(filePath):
             ## Check File for relevant data and extract
-            cnd = pd.read_csv(filePath)
-            print(cnd.head())
-            #if logging: print(f"File Exists\nTimestamps start{datetime.fromtimestamp(float(cnd[1][0])/1000.0)} end{datetime.fromtimestamp(float(cnd[-1][0])/1000.0)}\n Checking")
-            #print(f"Length {len(cnd)}")
-            #for i in range(len(cnd)):
-            #    test_time = start_time + (i * tf_ms)
-            #    cnd_time = cnd[i][0]
-            #    if test_time != cnd_time:
-            #        print("time sync error!!")
-            #        print(f"Test Time: {datetime.fromtimestamp(test_time/1000)}")
-            #        print(f"Candle Time: {datetime.fromtimestamp(test_time/1000)}")
-            #        return cnd
+            dataF = pd.read_csv(filePath, index_col=0)
+            if logging: print(dataF.head())
+
             ## Update File with needed data
+            
+            ## Reopen and read relevant data
+            dataF.columns = ['timestamp', 'open', 'close', 'high', 'low', 'volume']
+            return dataF
         else:
             if logging: print("No File Exists")
             ## Get relevant data in batches
             
-            # up to penultimate batch
+            ## up to penultimate batch
             for i in range(batch_count-1):
                 batch_end = time_count + (tf_ms * (max_fetch_amount-1))
                 tmp_cnd = bybit.fetch_ohlcv(symbol, timeframe, time_count, batch_end)
                 cnd += tmp_cnd
                 #print(f"batch {i+1}({datetime.fromtimestamp(time_count/1000)}-{datetime.fromtimestamp(batch_end/1000)}): {len(tmp_cnd)} Candles")
                 time_count = batch_end + tf_ms # increment timestamp
-            # do final batch
+            ## do final batch
             batch_end = int(time_count + ((last_batch * tf_ms)-tf_ms))
             tmp_cnd = bybit.fetch_ohlcv(symbol, timeframe, time_count, batch_end)
             cnd += tmp_cnd
-            #print(f"batch {batch_count}({datetime.fromtimestamp(time_count/1000)}-{datetime.fromtimestamp(batch_end/1000)}): {len(tmp_cnd)} Candles")
-            #print(f"total Candles: {len(cnd)}")
+                
             candle_count = int(candle_count)
             cnd = cnd[:candle_count]
 
             dataF = pd.DataFrame(cnd)
             dataF.to_csv(filePath)
+            dataF.columns = ['timestamp', 'open', 'close', 'high', 'low', 'volume']
             return dataF
     else:
         ## Hande other time format entries

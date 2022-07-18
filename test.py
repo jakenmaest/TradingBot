@@ -1,4 +1,4 @@
-from time import mktime
+from time import mktime, time
 from Utilities import GetOCHLV, TimeFormat, bybit
 
 from time import mktime
@@ -21,16 +21,18 @@ TSTAMP_1_DAY = 86400.0
 TSTAMP_1_WEEK = 604800
 
 # No time specified
-sTime = date_time(2022,6,8)
-eTime = date_time(2022,7,9)
+sTime = date_time(2021, 1, 1)
+eTime = date_time(2021, 12, 31)
 
 sTstamp = mktime(sTime.timetuple()) # start of start day
 eTstamp = mktime(eTime.timetuple()) + TSTAMP_1_DAY # end of end day
 
 if __name__ == "__main__":
-
-    print(f"start {date_time.fromtimestamp(sTstamp)}:{sTstamp}")
-    print(f"finish {date_time.fromtimestamp(eTstamp)}:{eTstamp}")
+    #print(f"start {date_time.fromtimestamp(sTstamp)}:{sTstamp}")
+    #print(f"finish {date_time.fromtimestamp(eTstamp)}:{eTstamp}")
+    t1 = time()
     df1 = GetOCHLV(symbol=file_sym, timeframe='5m', start=sTstamp, end=eTstamp)
-    print(df1.head())
-    
+    t2 = time()
+    print(f"time: {t2-t1:.2f}")
+    print(df1.describe())
+
